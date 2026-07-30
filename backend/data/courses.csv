@@ -1,0 +1,31 @@
+title,platform,skills_covered,level,url,rating
+Python for Everybody,Coursera,python programming basics data types loops functions,beginner,https://www.coursera.org/specializations/python,4.8
+Machine Learning by Andrew Ng,Coursera,machine learning supervised unsupervised neural networks statistics mathematics,intermediate,https://www.coursera.org/learn/machine-learning,4.9
+Deep Learning Specialization,Coursera,deep learning neural networks cnn rnn tensorflow python,intermediate,https://www.coursera.org/specializations/deep-learning,4.8
+SQL for Data Science,Coursera,sql database queries joins aggregation data analysis,beginner,https://www.coursera.org/learn/sql-for-data-science,4.6
+Data Visualization with Python,Coursera,data visualization matplotlib seaborn plotly pandas python,beginner,https://www.coursera.org/learn/python-for-data-visualization,4.5
+Complete Web Developer Bootcamp,Udemy,html css javascript react nodejs sql rest api git,beginner,https://www.udemy.com/course/the-complete-web-development-bootcamp/,4.7
+React - The Complete Guide,Udemy,react javascript frontend components hooks state management,intermediate,https://www.udemy.com/course/react-the-complete-guide-incl-redux/,4.7
+Node.js - The Complete Guide,Udemy,nodejs javascript rest api backend express mongodb,intermediate,https://www.udemy.com/course/nodejs-the-complete-guide/,4.7
+NLP with Python,Coursera,nlp natural language processing python nltk spacy text classification,intermediate,https://www.coursera.org/learn/python-text-mining,4.5
+PyTorch for Deep Learning,Udemy,pytorch deep learning neural networks python computer vision,intermediate,https://www.udemy.com/course/pytorch-for-deep-learning-and-computer-vision/,4.6
+TensorFlow Developer Certificate,Coursera,tensorflow deep learning python machine learning neural networks,intermediate,https://www.coursera.org/professional-certificates/tensorflow-in-practice,4.7
+AWS Cloud Practitioner,Udemy,aws cloud computing s3 ec2 lambda cloud,beginner,https://www.udemy.com/course/aws-certified-cloud-practitioner-new/,4.7
+Docker and Kubernetes,Udemy,docker kubernetes container cloud devops deployment,intermediate,https://www.udemy.com/course/docker-and-kubernetes-the-complete-guide/,4.6
+Statistics for Data Science,edX,statistics probability hypothesis testing mathematics data science,beginner,https://www.edx.org/course/statistics-and-data-science,4.5
+Pandas & NumPy for Data Analysis,Udemy,pandas numpy python data analysis data wrangling,beginner,https://www.udemy.com/course/data-analysis-with-pandas/,4.6
+Android Development with Kotlin,Udemy,kotlin android mobile development java,beginner,https://www.udemy.com/course/android-kotlin-developer/,4.6
+iOS Development with Swift,Udemy,swift ios mobile development apple xcode,intermediate,https://www.udemy.com/course/ios-13-app-development-bootcamp/,4.7
+Flutter Complete Guide,Udemy,flutter dart mobile development react native cross-platform,beginner,https://www.udemy.com/course/flutter-bootcamp-with-dart/,4.7
+Ethical Hacking Bootcamp,Udemy,ethical hacking cybersecurity networking penetration testing linux,intermediate,https://www.udemy.com/course/learn-ethical-hacking-from-scratch/,4.6
+Linux Command Line Basics,Udemy,linux command line bash scripting networking cybersecurity,beginner,https://www.udemy.com/course/linux-command-line-basics/,4.5
+Cryptography and Network Security,Coursera,cryptography network security cybersecurity encryption,intermediate,https://www.coursera.org/learn/crypto,4.5
+Cloud Security on AWS,Udemy,cloud security aws risk management encryption cybersecurity,intermediate,https://www.udemy.com/course/aws-certified-security-specialty/,4.6
+Terraform for DevOps,Udemy,terraform infrastructure cloud devops aws azure kubernetes,intermediate,https://www.udemy.com/course/terraform-beginner-to-advanced/,4.6
+Git & GitHub Complete Course,Udemy,git github version control collaboration branching,beginner,https://www.udemy.com/course/git-complete/,4.7
+REST API Design with Python Flask,Udemy,rest api python flask backend web development,intermediate,https://www.udemy.com/course/rest-api-flask-and-python/,4.6
+Full Stack Web Development,edX,html css javascript react python sql rest api docker git fullstack,intermediate,https://www.edx.org/course/full-stack-web-developer,4.5
+Data Science with Python,edX,python data science machine learning statistics pandas numpy,intermediate,https://www.edx.org/course/data-science-python,4.6
+Azure Fundamentals,Microsoft Learn,azure cloud computing cloud security networking,beginner,https://learn.microsoft.com/en-us/certifications/azure-fundamentals/,4.7
+Mathematics for Machine Learning,Coursera,mathematics linear algebra calculus statistics machine learning,beginner,https://www.coursera.org/specializations/mathematics-machine-learning,4.6
+Computer Vision with OpenCV,Udemy,computer vision opencv python deep learning image processing,intermediate,https://www.udemy.com/course/python-opencv-numpy-guide/,4.5

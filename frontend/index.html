@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LearnInGo – Student Learning & Assessment Module</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-card card">
+    <div class="auth-logo">LearnInGo</div>
+    <p class="auth-sub">AI-Based Learning Path Recommendation Dashboard</p>
+
+    <!-- tabs -->
+    <div style="display:flex;gap:4px;background:#f1f5f9;border-radius:10px;padding:4px;margin-bottom:28px">
+      <button class="btn btn-primary" id="tab-login"    onclick="switchTab('login')"    style="flex:1;border-radius:8px">Login</button>
+      <button class="btn btn-outline" id="tab-register" onclick="switchTab('register')" style="flex:1;border-radius:8px;border:none;background:transparent">Register</button>
+    </div>
+
+    <div id="alert" class="alert"></div>
+
+    <!-- LOGIN FORM -->
+    <form id="login-form" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="you@example.com" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" id="login-btn">Login →</button>
+      <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted)">
+        No account? <a href="#" onclick="switchTab('register')">Register here</a>
+      </p>
+    </form>
+
+    <!-- REGISTER FORM -->
+    <form id="register-form" style="display:none" onsubmit="handleRegister(event)">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="reg-name" placeholder="M Vyshnavi" required>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="reg-email" placeholder="you@example.com" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="reg-password" placeholder="min 6 characters" required>
+      </div>
+      <div class="form-group">
+        <label>Career Goal</label>
+        <select id="reg-career">
+          <option value="">Select your goal…</option>
+          <option value="data_scientist">Data Scientist</option>
+          <option value="web_developer">Web Developer</option>
+          <option value="ai_engineer">AI Engineer</option>
+          <option value="mobile_developer">Mobile Developer</option>
+          <option value="cybersecurity">Cybersecurity</option>
+          <option value="cloud_engineer">Cloud Engineer</option>
+          <option value="fullstack_developer">Full Stack Developer</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" id="reg-btn">Create Account →</button>
+      <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted)">
+        Already registered? <a href="#" onclick="switchTab('login')">Login</a>
+      </p>
+    </form>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+  // redirect if already logged in
+  if (getToken() && getUserId()) window.location.href = 'dashboard.html';
+
+  function switchTab(tab) {
+    document.getElementById('login-form').style.display    = tab === 'login'    ? 'block' : 'none';
+    document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+    document.getElementById('tab-login').className    = tab === 'login'    ? 'btn btn-primary' : 'btn btn-outline';
+    document.getElementById('tab-register').className = tab === 'register' ? 'btn btn-primary' : 'btn btn-outline';
+    document.getElementById('tab-login').style.cssText    = tab === 'login'    ? 'flex:1;border-radius:8px' : 'flex:1;border-radius:8px;border:none;background:transparent';
+    document.getElementById('tab-register').style.cssText = tab === 'register' ? 'flex:1;border-radius:8px' : 'flex:1;border-radius:8px;border:none;background:transparent';
+    showAlert('', '');
+  }
+
+  function showAlert(msg, type) {
+    const el = document.getElementById('alert');
+    el.textContent = msg;
+    el.className = `alert ${type} ${msg ? 'show' : ''}`;
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('login-btn');
+    btn.innerHTML = '<span class="spinner"></span> Logging in…';
+    btn.disabled = true;
+    try {
+      const data = await apiLogin(
+        document.getElementById('login-email').value,
+        document.getElementById('login-password').value
+      );
+      saveSession(data.token, data.user);
+      window.location.href = 'dashboard.html';
+    } catch(err) {
+      showAlert(err.message, 'alert-error');
+      btn.innerHTML = 'Login →';
+      btn.disabled = false;
+    }
+  }
+
+  async function handleRegister(e) {
+    e.preventDefault();
+    const btn = document.getElementById('reg-btn');
+    btn.innerHTML = '<span class="spinner"></span> Creating account…';
+    btn.disabled = true;
+    try {
+      const data = await apiRegister(
+        document.getElementById('reg-name').value,
+        document.getElementById('reg-email').value,
+        document.getElementById('reg-password').value,
+        document.getElementById('reg-career').value,
+        ''
+      );
+      saveSession(data.token, data.user);
+      window.location.href = 'skills.html';
+    } catch(err) {
+      showAlert(err.message, 'alert-error');
+      btn.innerHTML = 'Create Account →';
+      btn.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>
