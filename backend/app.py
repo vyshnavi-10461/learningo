@@ -28,10 +28,29 @@ def create_app():
 
     # create tables on first run
     with app.app_context():
-        db.create_all()
-        print("✅ Database tables created.")
-
-    return app
+      db.create_all()
+      print("✅ Database tables created.")
+    
+      from models import Course
+      import pandas as pd
+      import os
+    
+      if Course.query.count() == 0:
+        csv_path = os.path.join(os.path.dirname(__file__), 'data', 'courses.csv')
+        if os.path.exists(csv_path):
+            df = pd.read_csv(csv_path)
+            for _, row in df.iterrows():
+                course = Course(
+                    title          = row['title'],
+                    platform       = row['platform'],
+                    skills_covered = row['skills_covered'],
+                    level          = row['level'],
+                    url            = row['url'],
+                    rating         = float(row['rating'])
+                )
+                db.session.add(course)
+            db.session.commit()
+            print(f"✅ Auto-seeded {len(df)} courses.")
 
 app = create_app()
 
