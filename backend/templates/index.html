@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LearnInGo – Student Learning & Assessment Module</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 <div class="auth-wrap">
@@ -71,10 +71,10 @@
   </div>
 </div>
 
-<script src="api.js"></script>
+<script src="/static/api.js"></script>
 <script>
   // redirect if already logged in
-  if (getToken() && getUserId()) window.location.href = 'dashboard.html';
+  if (getToken() && getUserId()) window.location.href = '/dashboard';
 
   function switchTab(tab) {
     document.getElementById('login-form').style.display    = tab === 'login'    ? 'block' : 'none';
@@ -103,7 +103,7 @@
         document.getElementById('login-password').value
       );
       saveSession(data.token, data.user);
-      window.location.href = 'dashboard.html';
+      window.location.href = '/dashboard';;
     } catch(err) {
       showAlert(err.message, 'alert-error');
       btn.innerHTML = 'Login →';
@@ -125,7 +125,7 @@
         ''
       );
       saveSession(data.token, data.user);
-      window.location.href = 'skills.html';
+      window.location.href = '/skills';
     } catch(err) {
       showAlert(err.message, 'alert-error');
       btn.innerHTML = 'Create Account →';

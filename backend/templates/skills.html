@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LearnInGo – My Skills</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/static/style.css">
   <style>
     .skill-row {
       display: flex;
@@ -62,9 +62,9 @@
 <nav class="navbar">
   <div class="navbar-brand">LearnInGo</div>
   <div class="navbar-links">
-    <a href="dashboard.html" class="nav-link">Dashboard</a>
-    <a href="skills.html"    class="nav-link active">Skills</a>
-    <a href="progress.html"  class="nav-link">Progress</a>
+    <a href="/dashboard" class="nav-link">Dashboard</a>
+    <a href="/skills"    class="nav-link active">Skills</a>
+    <a href="/progress"  class="nav-link">Progress</a>
     <span class="nav-user" id="nav-user">User</span>
     <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
   </div>
@@ -152,7 +152,7 @@
   </div>
 </div>
 
-<script src="api.js"></script>
+<script src="/static/api.js"></script>
 <script>
   if (!requireAuth()) throw new Error('Not authenticated');
   showNavUser();
@@ -354,7 +354,7 @@
       user.career_goal = goal;
       localStorage.setItem('slam_user', JSON.stringify(user));
       showAlert('Skills saved! Redirecting…', 'alert-success');
-      setTimeout(() => window.location.href = 'dashboard.html', 1200);
+      setTimeout(() => window.location.href = '/dashboard', 1200);
     } catch(err) {
       showAlert(err.message, 'alert-error');
       btn.innerHTML = 'Save & Get Recommendations →';
