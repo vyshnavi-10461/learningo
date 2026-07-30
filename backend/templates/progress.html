@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LearnInGo – Progress Tracker</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="navbar-brand">LearnInGo</div>
+  <div class="navbar-links">
+    <a href="dashboard.html" class="nav-link">Dashboard</a>
+    <a href="skills.html"    class="nav-link">Skills</a>
+    <a href="progress.html"  class="nav-link active">Progress</a>
+    <span class="nav-user" id="nav-user">User</span>
+    <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="container page-wrap">
+
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:32px">
+    <div>
+      <div class="page-title">Progress Tracker</div>
+      <p class="page-sub" style="margin-bottom:0">Track every course — mark what you're studying and what you've finished.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openAddModal()">+ Add Course Progress</button>
+  </div>
+
+  <!-- Stat row -->
+  <div class="stat-cards" style="margin-bottom:32px">
+    <div class="stat-card c-success"><div class="num" id="s-done">0</div><div class="lbl">Completed</div></div>
+    <div class="stat-card c-warn">  <div class="num" id="s-prog">0</div><div class="lbl">In Progress</div></div>
+    <div class="stat-card c-accent"><div class="num" id="s-total">0</div><div class="lbl">Total Enrolled</div></div>
+    <div class="stat-card" style="border-color:var(--accent)">
+      <div class="num" id="s-pct" style="color:var(--accent)">0%</div>
+      <div class="lbl">Avg Completion</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 300px;gap:24px;align-items:start">
+
+    <!-- Progress list -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div class="section-title" style="margin-bottom:0">📚 My Courses</div>
+        <!-- filter -->
+        <select id="filter-status" onchange="renderList()" style="width:auto;padding:6px 12px;font-size:13px">
+          <option value="all">All</option>
+          <option value="not_started">Not Started</option>
+          <option value="in_progress">In Progress</option>
+          <option value="done">Completed</option>
+        </select>
+      </div>
+
+      <div id="progress-list">
+        <div class="spinner" style="margin:40px auto;display:block"></div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div class="card">
+        <div class="section-title">📊 Status Breakdown</div>
+        <canvas id="statusChart" style="max-height:220px"></canvas>
+      </div>
+
+      <div class="card">
+        <div class="section-title">🏆 Recent Completions</div>
+        <div id="recent-done">
+          <p style="font-size:13px;color:var(--muted)">No completed courses yet.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Add Course Modal ─────────────────────────────────────────────── -->
+<div id="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);
+     z-index:200;align-items:center;justify-content:center">
+  <div class="card" style="width:100%;max-width:480px;margin:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div class="section-title" style="margin-bottom:0">Add Course Progress</div>
+      <button onclick="closeModal()" style="border:none;background:none;font-size:24px;cursor:pointer;color:var(--muted)">×</button>
+    </div>
+    <div class="form-group">
+      <label>Select a Recommended Course</label>
+      <select id="modal-course">
+        <option value="">Loading courses…</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="modal-status">
+        <option value="not_started">Not Started</option>
+        <option value="in_progress" selected>In Progress</option>
+        <option value="done">Completed</option>
+      </select>
+    </div>
+    <div class="form-group" id="pct-group">
+      <label>Completion % — <span id="pct-val">50</span>%</label>
+      <input type="range" id="modal-pct" min="0" max="100" value="50"
+             oninput="document.getElementById('pct-val').textContent=this.value">
+    </div>
+    <div id="modal-alert" class="alert"></div>
+    <button class="btn btn-primary btn-full" onclick="saveModalProgress()">Save Progress</button>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+  if (!requireAuth()) throw new Error();
+  showNavUser();
+
+  let allProgress = [];
+  let allCourses  = [];
+  let chartInst   = null;
+
+  // ── modal status change: hide pct when done/not_started ──────────
+  document.getElementById('modal-status').addEventListener('change', function() {
+    document.getElementById('pct-group').style.display =
+      this.value === 'in_progress' ? 'block' : 'none';
+  });
+
+  async function loadAll() {
+    try {
+      const [prog, courses] = await Promise.all([apiGetProgress(), apiRecommend()]);
+      allProgress = prog.progress;
+      allCourses  = courses.courses;
+      renderList();
+      renderStats();
+      renderChart();
+      renderRecent();
+    } catch(e) {
+      document.getElementById('progress-list').innerHTML =
+        `<div class="empty-state"><div class="icon">📭</div>
+         <p>Could not load progress.<br><a href="skills.html">Add skills first →</a></p></div>`;
+    }
+  }
+
+  function renderList() {
+    const filter = document.getElementById('filter-status').value;
+    const list   = filter === 'all' ? allProgress : allProgress.filter(r => r.status === filter);
+    const el     = document.getElementById('progress-list');
+
+    if (!list.length) {
+      el.innerHTML = `<div class="empty-state"><div class="icon">📭</div>
+        <p>No courses here yet.<br><button class="btn btn-primary btn-sm" onclick="openAddModal()">Add a course</button></p></div>`;
+      return;
+    }
+
+    el.innerHTML = list.map(r => `
+      <div style="padding:16px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px">
+          <div>
+            <div style="font-weight:700;font-size:14px">${r.course_title}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">📌 ${r.platform}</div>
+          </div>
+          <span class="status-pill status-${r.status}">${r.status.replace('_',' ')}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div class="progress-bar-wrap" style="flex:1">
+            <div class="progress-bar-fill" style="width:${r.completion_pct}%"></div>
+          </div>
+          <span style="font-size:12px;font-weight:700;color:var(--accent);min-width:36px">${r.completion_pct}%</span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${r.status !== 'in_progress' ? `<button class="btn btn-outline btn-sm" onclick="quickUpdate(${r.course_id},'in_progress',50)">📖 In Progress</button>` : ''}
+          ${r.status !== 'done'        ? `<button class="btn btn-success btn-sm" onclick="quickUpdate(${r.course_id},'done',100)">✅ Mark Done</button>` : ''}
+          ${r.status !== 'not_started' ? `<button class="btn btn-outline btn-sm" onclick="quickUpdate(${r.course_id},'not_started',0)">↩ Reset</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderStats() {
+    const done    = allProgress.filter(r => r.status === 'done').length;
+    const inProg  = allProgress.filter(r => r.status === 'in_progress').length;
+    const total   = allProgress.length;
+    const avgPct  = total ? Math.round(allProgress.reduce((a,r) => a+r.completion_pct,0)/total) : 0;
+
+    document.getElementById('s-done').textContent  = done;
+    document.getElementById('s-prog').textContent  = inProg;
+    document.getElementById('s-total').textContent = total;
+    document.getElementById('s-pct').textContent   = avgPct + '%';
+  }
+
+  function renderChart() {
+    const done    = allProgress.filter(r => r.status === 'done').length;
+    const inProg  = allProgress.filter(r => r.status === 'in_progress').length;
+    const notSt   = allProgress.filter(r => r.status === 'not_started').length;
+
+    if (chartInst) chartInst.destroy();
+    chartInst = new Chart(document.getElementById('statusChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Completed','In Progress','Not Started'],
+        datasets: [{
+          data: [done, inProg, notSt],
+          backgroundColor: ['#10b981','#f59e0b','#e2e8f0'],
+          borderWidth: 0, hoverOffset: 6
+        }]
+      },
+      options: {
+        cutout: '65%',
+        plugins: { legend: { position: 'bottom', labels: { font:{size:11}, padding:10 } } }
+      }
+    });
+  }
+
+  function renderRecent() {
+    const done = allProgress.filter(r => r.status === 'done').slice(-3).reverse();
+    const el   = document.getElementById('recent-done');
+    if (!done.length) {
+      el.innerHTML = `<p style="font-size:13px;color:var(--muted)">No completed courses yet.</p>`;
+    } else {
+      el.innerHTML = done.map(r => `
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div style="width:28px;height:28px;border-radius:50%;background:rgba(16,185,129,0.12);
+               display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">✅</div>
+          <div style="font-size:13px;font-weight:600">${r.course_title}</div>
+        </div>
+      `).join('');
+    }
+  }
+
+  async function quickUpdate(courseId, status, pct) {
+    try {
+      await apiUpdateProgress(courseId, status, pct);
+      await loadAll();
+    } catch(e) { alert(e.message); }
+  }
+
+  // ── Modal ─────────────────────────────────────────────────────────
+  function openAddModal() {
+    // populate course dropdown
+    const sel = document.getElementById('modal-course');
+    sel.innerHTML = allCourses.length
+      ? allCourses.map(c => `<option value="${c.id}">${c.title} (${c.platform})</option>`).join('')
+      : '<option value="">No recommended courses yet. Add skills first.</option>';
+
+    document.getElementById('modal-overlay').style.display = 'flex';
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').style.display = 'none';
+    document.getElementById('modal-alert').className = 'alert';
+  }
+
+  async function saveModalProgress() {
+    const courseId = document.getElementById('modal-course').value;
+    const status   = document.getElementById('modal-status').value;
+    const pct      = parseInt(document.getElementById('modal-pct').value);
+
+    if (!courseId) {
+      const el = document.getElementById('modal-alert');
+      el.textContent = 'Please select a course.';
+      el.className = 'alert alert-error show';
+      return;
+    }
+
+    try {
+      await apiUpdateProgress(courseId, status, pct);
+      closeModal();
+      await loadAll();
+    } catch(e) {
+      const el = document.getElementById('modal-alert');
+      el.textContent = e.message;
+      el.className = 'alert alert-error show';
+    }
+  }
+
+  // close modal on overlay click
+  document.getElementById('modal-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  loadAll();
+</script>
+</body>
+</html>

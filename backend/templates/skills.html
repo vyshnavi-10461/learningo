@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LearnInGo – My Skills</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .skill-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: grab;
+      transition: background 0.15s, box-shadow 0.15s;
+      user-select: none;
+    }
+    .skill-row:active { cursor: grabbing; }
+    .skill-row.dragging {
+      opacity: 0.4;
+    }
+    .skill-row.drag-over {
+      background: rgba(79,70,229,0.06);
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+    .drag-handle {
+      color: var(--muted);
+      font-size: 18px;
+      cursor: grab;
+      padding: 0 4px;
+      flex-shrink: 0;
+    }
+    .quick-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 13px;
+      background: var(--light);
+      border: 1.5px solid var(--border);
+      border-radius: 99px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: var(--font);
+    }
+    .quick-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(79,70,229,0.06);
+    }
+    .quick-chip.selected {
+      background: rgba(79,70,229,0.12);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-brand">LearnInGo</div>
+  <div class="navbar-links">
+    <a href="dashboard.html" class="nav-link">Dashboard</a>
+    <a href="skills.html"    class="nav-link active">Skills</a>
+    <a href="progress.html"  class="nav-link">Progress</a>
+    <span class="nav-user" id="nav-user">User</span>
+    <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="container page-wrap">
+  <div class="page-title">My Skills</div>
+  <p class="page-sub">Add your current skills and set your career goal — we'll find your learning gaps.</p>
+
+  <div id="alert" class="alert"></div>
+
+  <div style="display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:start">
+
+    <!-- LEFT -->
+    <div>
+
+      <!-- Career goal -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="section-title">🎯 Career Goal</div>
+        <div class="form-group" style="margin-bottom:0">
+          <select id="career-goal">
+            <option value="">Select your career goal…</option>
+            <option value="data_scientist">Data Scientist</option>
+            <option value="web_developer">Web Developer</option>
+            <option value="ai_engineer">AI Engineer</option>
+            <option value="mobile_developer">Mobile Developer</option>
+            <option value="cybersecurity">Cybersecurity</option>
+            <option value="cloud_engineer">Cloud Engineer</option>
+            <option value="fullstack_developer">Full Stack Developer</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Add skill -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="section-title">➕ Add a Skill</div>
+        <div style="display:flex;gap:10px;margin-bottom:16px">
+          <input type="text" id="skill-input" placeholder="e.g. Python, SQL, React…"
+                 style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addSkillFromInput()}">
+          <button class="btn btn-primary" onclick="addSkillFromInput()">Add</button>
+        </div>
+
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;
+                    letter-spacing:0.5px;margin-bottom:10px">Quick add — click to add:</div>
+        <div id="quick-chips" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+      </div>
+
+      <!-- Skill list with drag-drop -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div class="section-title" style="margin-bottom:0">📊 Your Skills & Proficiency</div>
+          <span style="font-size:12px;color:var(--muted)">⠿ drag to reorder</span>
+        </div>
+        <div id="skill-list"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div>
+      <div class="card" style="position:sticky;top:76px">
+        <div class="section-title">📋 Summary</div>
+        <div class="stat-cards" style="grid-template-columns:1fr 1fr;margin-bottom:20px">
+          <div class="stat-card c-accent">
+            <div class="num" id="count-skills">0</div>
+            <div class="lbl">Skills</div>
+          </div>
+          <div class="stat-card c-success">
+            <div class="num" id="avg-prof">–</div>
+            <div class="lbl">Avg level</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Selected goal</label>
+          <div id="goal-display" style="font-size:14px;font-weight:700;color:var(--accent);min-height:20px">–</div>
+        </div>
+        <button class="btn btn-primary btn-full" id="save-btn" onclick="saveSkills()">
+          Save & Get Recommendations →
+        </button>
+        <p style="font-size:12px;color:var(--muted);text-align:center;margin-top:12px">
+          You can update your skills anytime.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+  if (!requireAuth()) throw new Error('Not authenticated');
+  showNavUser();
+
+  const QUICK_SKILLS = [
+    'Python','JavaScript','HTML','CSS','React','SQL','Machine Learning',
+    'Deep Learning','NLP','Docker','Git','AWS','Linux','Statistics','Pandas',
+    'NumPy','Kotlin','Swift','Flutter','Networking','TensorFlow','PyTorch'
+  ];
+
+  let skills = [];
+  let dragSrcIndex = null;
+
+  // ── Build quick-add chips ────────────────────────────────────────
+  const qc = document.getElementById('quick-chips');
+  QUICK_SKILLS.forEach(name => {
+    const chip = document.createElement('button');
+    chip.className   = 'quick-chip';
+    chip.textContent = name;
+    chip.dataset.name = name;
+    chip.type        = 'button';
+    chip.onclick     = () => addSkillByName(name, chip);
+    qc.appendChild(chip);
+  });
+
+  // ── Load existing skills ─────────────────────────────────────────
+  (async () => {
+    try {
+      const data = await apiGetSkills();
+      skills = data.skills.map(s => ({ skill_name: s.skill_name, proficiency: s.proficiency }));
+      // mark chips that are already selected
+      skills.forEach(s => {
+        const chip = findChip(s.skill_name);
+        if (chip) chip.classList.add('selected');
+      });
+      renderSkills();
+    } catch(_) {}
+
+    const user = JSON.parse(localStorage.getItem('slam_user') || '{}');
+    if (user.career_goal) {
+      document.getElementById('career-goal').value = user.career_goal;
+      updateGoalDisplay();
+    }
+  })();
+
+  document.getElementById('career-goal').addEventListener('change', updateGoalDisplay);
+
+  function findChip(skillName) {
+    const btns = document.querySelectorAll('.quick-chip');
+    for (const btn of btns) {
+      if (btn.dataset.name.toLowerCase() === skillName.toLowerCase()) return btn;
+    }
+    return null;
+  }
+
+  function updateGoalDisplay() {
+    const sel = document.getElementById('career-goal');
+    const txt = sel.options[sel.selectedIndex].text;
+    document.getElementById('goal-display').textContent =
+      txt === 'Select your career goal…' ? '–' : txt;
+  }
+
+  function addSkillFromInput() {
+    const inp = document.getElementById('skill-input');
+    const val = inp.value.trim();
+    if (!val) return;
+    const chip = findChip(val);
+    addSkillByName(val, chip);
+    inp.value = '';
+    inp.focus();
+  }
+
+  function addSkillByName(name, chipEl) {
+    const key = name.toLowerCase().trim();
+    if (!key) return;
+    if (skills.find(s => s.skill_name === key)) {
+      showAlert(`"${name}" is already in your list!`, 'alert-error');
+      return;
+    }
+    skills.push({ skill_name: key, proficiency: 3 });
+    if (chipEl) chipEl.classList.add('selected');
+    renderSkills();
+    showAlert('', '');
+  }
+
+  function removeSkill(index) {
+    const key  = skills[index].skill_name;
+    const chip = findChip(key);
+    if (chip) chip.classList.remove('selected');
+    skills.splice(index, 1);
+    renderSkills();
+  }
+
+  function setProficiency(index, val) {
+    skills[index].proficiency = val;
+    renderSkills();
+  }
+
+  // ── Render skill rows with drag-drop ─────────────────────────────
+  function renderSkills() {
+    const list = document.getElementById('skill-list');
+
+    if (!skills.length) {
+      list.innerHTML = `<div class="empty-state">
+        <div class="icon">🧩</div>
+        <p>No skills added yet.<br>Type a skill above or click a quick-add chip.</p>
+      </div>`;
+    } else {
+      list.innerHTML = '';
+      skills.forEach((s, i) => {
+        const row = document.createElement('div');
+        row.className   = 'skill-row';
+        row.draggable   = true;
+        row.dataset.idx = i;
+
+        row.innerHTML = `
+          <span class="drag-handle" title="Drag to reorder">⠿</span>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:14px;text-transform:capitalize">${s.skill_name}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">
+              ${['','Beginner','Basic','Intermediate','Advanced','Expert'][s.proficiency]}
+            </div>
+          </div>
+          <div style="display:flex;gap:4px">
+            ${[1,2,3,4,5].map(n => `
+              <button onclick="setProficiency(${i},${n})" type="button"
+                style="width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;
+                       border:1.5px solid ${s.proficiency>=n?'var(--accent)':'var(--border)'};
+                       background:${s.proficiency>=n?'rgba(79,70,229,0.12)':'transparent'};
+                       color:${s.proficiency>=n?'var(--accent)':'var(--muted)'}">${n}</button>
+            `).join('')}
+          </div>
+          <button onclick="removeSkill(${i})" type="button"
+            style="width:30px;height:30px;border-radius:8px;border:none;
+                   background:rgba(239,68,68,0.08);color:var(--danger);
+                   cursor:pointer;font-size:18px;line-height:1;flex-shrink:0">×</button>
+        `;
+
+        // ── drag events ────────────────────────────────────────────
+        row.addEventListener('dragstart', e => {
+          dragSrcIndex = i;
+          setTimeout(() => row.classList.add('dragging'), 0);
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        row.addEventListener('dragend', () => {
+          row.classList.remove('dragging');
+          document.querySelectorAll('.skill-row').forEach(r => r.classList.remove('drag-over'));
+        });
+        row.addEventListener('dragover', e => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          document.querySelectorAll('.skill-row').forEach(r => r.classList.remove('drag-over'));
+          row.classList.add('drag-over');
+        });
+        row.addEventListener('drop', e => {
+          e.preventDefault();
+          const targetIndex = parseInt(row.dataset.idx);
+          if (dragSrcIndex === null || dragSrcIndex === targetIndex) return;
+          // reorder
+          const moved = skills.splice(dragSrcIndex, 1)[0];
+          skills.splice(targetIndex, 0, moved);
+          dragSrcIndex = null;
+          renderSkills();
+        });
+
+        list.appendChild(row);
+      });
+    }
+
+    // update summary
+    document.getElementById('count-skills').textContent = skills.length;
+    if (skills.length) {
+      const avg = (skills.reduce((a,s) => a + s.proficiency, 0) / skills.length).toFixed(1);
+      document.getElementById('avg-prof').textContent = avg;
+    } else {
+      document.getElementById('avg-prof').textContent = '–';
+    }
+  }
+
+  function showAlert(msg, type) {
+    const el = document.getElementById('alert');
+    el.textContent = msg;
+    el.className   = `alert ${type} ${msg ? 'show' : ''}`;
+    if (msg) setTimeout(() => showAlert('',''), 2500);
+  }
+
+  async function saveSkills() {
+    if (!skills.length) { showAlert('Please add at least one skill.', 'alert-error'); return; }
+    const goal = document.getElementById('career-goal').value;
+    if (!goal) { showAlert('Please select a career goal.', 'alert-error'); return; }
+
+    const btn = document.getElementById('save-btn');
+    btn.innerHTML = '<span class="spinner"></span> Saving…';
+    btn.disabled  = true;
+
+    try {
+      await apiSaveSkills(skills, goal);
+      const user = JSON.parse(localStorage.getItem('slam_user') || '{}');
+      user.career_goal = goal;
+      localStorage.setItem('slam_user', JSON.stringify(user));
+      showAlert('Skills saved! Redirecting…', 'alert-success');
+      setTimeout(() => window.location.href = 'dashboard.html', 1200);
+    } catch(err) {
+      showAlert(err.message, 'alert-error');
+      btn.innerHTML = 'Save & Get Recommendations →';
+      btn.disabled  = false;
+    }
+  }
+
+  renderSkills();
+</script>
+</body>
+</html>
